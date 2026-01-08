@@ -1,5 +1,5 @@
 {
-  "name": "tally-ho-client",
+  "name": "fresh-tracks-client",
   "version": "1.0.0",
   "private": true,
   "type": "module",
@@ -11,8 +11,12 @@
     "postinstall": "nuxt prepare"
   },
   "dependencies": {
+    "apexcharts": "^5.3.6",
+    "laravel-echo": "^2.2.6",
     "nuxt": "^3.15.1",
-    "vue": "latest"
+    "pusher-js": "^8.4.0",
+    "vue": "latest",
+    "vue3-apexcharts": "^1.10.0"
   },
   "devDependencies": {
     "@nuxtjs/tailwindcss": "^6.12.2",

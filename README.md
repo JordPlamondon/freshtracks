@@ -1,171 +1,119 @@
-# TallyHo - Time Tracking Application
+# FreshTracks
 
-A modern, full-stack time tracking application built with Laravel 11 and Nuxt 3.
+A time tracking application for freelancers and small teams. Track billable hours, manage clients and projects, generate invoices, and view analytics.
 
-## Features
-
-- **Timer Functionality**: Start/stop timer with real-time duration display
-- **Client Management**: Full CRUD for clients with hourly rates
-- **Project Management**: Organize work by clients and projects
-- **Time Entries**: Track and manage all time entries
-- **Invoice Generation**: Generate invoices from billable time entries
-- **Authentication**: Secure API authentication with Laravel Sanctum
-- **Dark Theme**: Clean, minimal UI with dark mode (#0a0f1f background)
+**Live Demo:** https://getfreshtracks.com
+**Credentials:** `demo@freshtracks.test` / `password`
 
 ## Tech Stack
 
-### Backend
-- Laravel 11
-- SQLite database
-- Laravel Sanctum for API authentication
-- RESTful API architecture
+**Backend:** Laravel 12, Laravel Reverb (WebSockets), Laravel Sanctum, SQLite
+**Frontend:** Nuxt 3, Vue 3 Composition API, TypeScript, Tailwind CSS, ApexCharts
 
-### Frontend
-- Nuxt 3
-- Vue 3 Composition API
-- Tailwind CSS
-- TypeScript
+## Features
+
+- **Timer** - Start, stop, pause, and resume timers. Timers sync in real-time across browser tabs via WebSockets.
+- **Weekly Timesheet** - View and edit entries by day with keyboard navigation (arrow keys, T for today).
+- **Analytics** - Hours worked, billable ratio, revenue breakdowns with trend comparisons. Period filters (7/30/90 days).
+- **Reports** - Filter by date range, client, project, billable status. Group by day/client/project. CSV export.
+- **Clients & Projects** - Manage clients with hourly rates, organize projects per client.
+- **Invoices** - Generate invoices from unbilled time entries.
+- **Keyboard Shortcuts** - Press `?` to see all shortcuts. `S` toggles timer, `G+H/T/A/R/P/C/I` navigates pages, `Cmd+K` opens command palette.
+- **Live Revenue** - Optional real-time revenue display with rolling number animations. Toggle in Settings.
+- **Mobile** - Responsive design with bottom navigation.
 
 ## Installation
 
-### Prerequisites
+### Requirements
+
 - PHP 8.2+
 - Composer
 - Node.js 18+
-- npm or pnpm
+- npm
 
-### Backend Setup
+### Setup
 
-1. Navigate to the project root:
 ```bash
-cd tally-ho
-```
+# Clone and enter directory
+cd fresh-tracks
 
-2. Install PHP dependencies:
-```bash
+# Install dependencies
 composer install
-```
+npm install --prefix client
 
-3. Copy environment file:
-```bash
+# Environment
 cp .env.example .env
-```
-
-4. Generate application key:
-```bash
 php artisan key:generate
-```
 
-5. Run migrations and seed database:
-```bash
+# Database
 php artisan migrate:fresh --seed
+
+# Start servers (runs Laravel, Reverb, and Nuxt concurrently)
+composer dev
 ```
 
-6. Start the Laravel development server:
-```bash
-php artisan serve
-```
+Backend runs at `http://localhost:8000`, frontend at `http://localhost:3000`.
 
-The API will be available at `http://localhost:8000`
-
-### Frontend Setup
-
-1. Navigate to the client directory:
-```bash
-cd client
-```
-
-2. Install dependencies:
-```bash
-npm install
-```
-
-3. Start the development server:
-```bash
-npm run dev
-```
-
-The frontend will be available at `http://localhost:3000`
-
-## Default Credentials
-
-- **Email**: demo@tallyho.test
-- **Password**: password
+For production, you'll also need to run `php artisan reverb:start` for WebSocket support.
 
 ## Sample Data
 
-The seeder creates:
-- 1 demo user
-- 3 clients (Acme Corporation, Tech Startup Inc, Design Studio)
+The seeder creates a demo user with:
+- 4 clients (Acme Corporation, Tech Startup Inc, Creative Design Co, Legacy Systems Ltd)
 - 2 projects per client
-- Multiple time entries for each project
+- Time entries spread across the past few weeks
 
-## API Endpoints
+Reset anytime with `php artisan migrate:fresh --seed`.
 
-### Authentication
+## API
+
+All endpoints require authentication via Laravel Sanctum (cookie-based for SPA, token for API).
+
+### Auth
 - `POST /api/login` - Login
-- `POST /api/register` - Register new user
+- `POST /api/register` - Register
 - `POST /api/logout` - Logout
 
-### Clients
-- `GET /api/clients` - List all clients
-- `POST /api/clients` - Create client
-- `GET /api/clients/{id}` - Get client details
-- `PUT /api/clients/{id}` - Update client
-- `DELETE /api/clients/{id}` - Delete client
-
-### Projects
-- `GET /api/projects` - List all projects
-- `POST /api/projects` - Create project
-- `GET /api/projects/{id}` - Get project details
-- `PUT /api/projects/{id}` - Update project
-- `DELETE /api/projects/{id}` - Delete project
-
 ### Time Entries
-- `GET /api/time-entries` - List all time entries
+- `GET /api/time-entries` - List entries
 - `POST /api/time-entries` - Start timer
 - `POST /api/time-entries/{id}/stop` - Stop timer
-- `GET /api/active-timer` - Get currently running timer
-- `PUT /api/time-entries/{id}` - Update time entry
-- `DELETE /api/time-entries/{id}` - Delete time entry
+- `POST /api/time-entries/{id}/restart` - Resume a stopped entry
+- `GET /api/active-timer` - Get running timer
+- `PUT /api/time-entries/{id}` - Update entry
+- `DELETE /api/time-entries/{id}` - Delete entry
 
-### Invoices
-- `GET /api/invoices` - List all invoices
-- `POST /api/invoices/generate` - Generate invoice from time entries
-- `GET /api/invoices/{id}` - Get invoice details
-- `PUT /api/invoices/{id}` - Update invoice
-- `DELETE /api/invoices/{id}` - Delete invoice
+### Resources
+- `GET|POST /api/clients` - List/create clients
+- `GET|PUT|DELETE /api/clients/{id}` - Read/update/delete client
+- `GET|POST /api/projects` - List/create projects
+- `GET|PUT|DELETE /api/projects/{id}` - Read/update/delete project
+- `GET|POST /api/invoices` - List/create invoices
+- `POST /api/invoices/generate` - Generate invoice from entries
+- `GET|PUT|DELETE /api/invoices/{id}` - Read/update/delete invoice
+
+### Settings
+- `GET /api/settings` - Get user settings
+- `PUT /api/settings` - Update settings
 
 ## Project Structure
 
 ```
-tally-ho/
-├── app/
-│   ├── Http/Controllers/    # API Controllers
-│   ├── Models/              # Eloquent Models
-│   └── Policies/            # Authorization Policies
+fresh-tracks/
+├── app/                    # Laravel application
+│   ├── Http/Controllers/   # API controllers
+│   ├── Models/             # Eloquent models
+│   └── Events/             # WebSocket events
 ├── database/
-│   ├── migrations/          # Database migrations
-│   └── seeders/            # Database seeders
+│   ├── migrations/         # Database schema
+│   └── seeders/            # Demo data
 ├── routes/
 │   └── api.php             # API routes
 └── client/                 # Nuxt frontend
     ├── components/         # Vue components
-    ├── composables/        # Composables (useApi)
-    ├── layouts/           # Layout components
-    └── pages/             # Page components
-```
-
-## Development
-
-### Running Tests
-```bash
-php artisan test
-```
-
-### Database Reset
-```bash
-php artisan migrate:fresh --seed
+    ├── composables/        # Shared logic (useApi, useEcho, useKeyboardShortcuts)
+    ├── layouts/            # App layouts
+    └── pages/              # Route pages
 ```
 
 ## License

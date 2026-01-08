@@ -76,7 +76,7 @@ class InvoiceController extends Controller
 
         $client = Client::findOrFail($validated['client_id']);
         $timeEntries = TimeEntry::whereIn('id', $validated['time_entry_ids'])
-            ->whereNull('stopped_at', false)
+            ->whereNotNull('stopped_at')
             ->with('project')
             ->get();
 

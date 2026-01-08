@@ -1,60 +1,57 @@
 <template>
-  <div class="min-h-screen bg-primary-bg text-primary-text flex items-center justify-center px-4">
-    <div class="max-w-md w-full space-y-8">
-      <div>
-        <h2 class="text-center text-3xl font-bold">TallyHo</h2>
-        <p class="mt-2 text-center text-sm text-gray-400">
-          Sign in to your account
-        </p>
+  <div class="min-h-screen bg-sidebar-bg flex flex-col items-center pt-24">
+    <!-- Logo -->
+    <div class="flex items-center gap-2 mb-8">
+      <img src="/freshtracks-logo.svg" alt="FreshTracks" class="h-8 w-8 flex-shrink-0" />
+      <span class="text-2xl font-bold text-text-primary">FreshTracks</span>
+    </div>
+
+    <div class="bg-white p-8 rounded-lg border border-border-light w-full max-w-md shadow-[0_1px_4px_0_rgba(0,0,0,0.11)]">
+      <h1 class="text-2xl font-semibold text-text-primary mb-6">Sign In</h1>
+
+      <div v-if="error" class="mb-4 p-3 bg-red-50 border border-red-200 rounded text-sm text-red-600">
+        {{ error }}
       </div>
-      
-      <form @submit.prevent="login" class="mt-8 space-y-6">
-        <div v-if="error" class="p-3 bg-red-900/50 border border-red-800 rounded-md text-sm">
-          {{ error }}
+
+      <form @submit.prevent="login" class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-text-primary mb-1">Email</label>
+          <input
+            v-model="email"
+            type="email"
+            required
+            class="w-full px-3 py-2 border border-border-light rounded-md focus:outline-none"
+          />
         </div>
-        
-        <div class="space-y-4">
-          <div>
-            <label for="email" class="block text-sm font-medium mb-2">
-              Email address
-            </label>
-            <input
-              id="email"
-              v-model="email"
-              type="email"
-              required
-              class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-accent"
-              placeholder="you@example.com"
-            />
-          </div>
-          
-          <div>
-            <label for="password" class="block text-sm font-medium mb-2">
-              Password
-            </label>
-            <input
-              id="password"
-              v-model="password"
-              type="password"
-              required
-              class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-accent"
-              placeholder="••••••••"
-            />
-          </div>
+
+        <div>
+          <label class="block text-sm font-medium text-text-primary mb-1">Password</label>
+          <input
+            v-model="password"
+            type="password"
+            required
+            class="w-full px-3 py-2 border border-border-light rounded-md focus:outline-none"
+          />
         </div>
 
         <button
           type="submit"
           :disabled="loading"
-          class="w-full py-2 px-4 bg-primary-accent hover:bg-indigo-700 disabled:bg-gray-700 rounded-md font-medium disabled:cursor-not-allowed"
+          class="btn-accent w-full py-2 rounded-md font-medium text-text-primary disabled:opacity-50"
         >
-          {{ loading ? 'Signing in...' : 'Sign in' }}
+          <span class="relative z-[1]">{{ loading ? 'Signing in...' : 'Sign in' }}</span>
         </button>
-        
-        <p class="text-center text-sm text-gray-400">
-          Demo: demo@tallyho.test / password
-        </p>
+
       </form>
+    </div>
+
+    <!-- Demo Notice -->
+    <div class="mt-6 text-center max-w-md">
+      <div class="bg-white/60 backdrop-blur-sm border border-border-light rounded-lg px-4 py-3">
+        <p class="text-sm font-medium text-text-primary">Demo Mode</p>
+        <p class="text-sm text-text-secondary mt-1">Feel free to explore! Data resets every 3 hours.</p>
+        <p class="text-xs text-text-secondary mt-1">Credentials: demo@freshtracks.test / password</p>
+      </div>
     </div>
   </div>
 </template>
@@ -65,7 +62,7 @@ definePageMeta({
 })
 
 const loginApi = useApi()
-const email = ref('demo@tallyho.test')
+const email = ref('demo@freshtracks.test')
 const password = ref('password')
 const error = ref('')
 const loading = ref(false)
@@ -73,7 +70,7 @@ const loading = ref(false)
 const login = async () => {
   error.value = ''
   loading.value = true
-  
+
   try {
     const data = await loginApi.api('/login', {
       method: 'POST',
@@ -82,7 +79,7 @@ const login = async () => {
         password: password.value
       }
     })
-    
+
     loginApi.token.value = data.token
     navigateTo('/')
   } catch (err) {

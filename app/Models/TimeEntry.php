@@ -12,6 +12,7 @@ class TimeEntry extends Model
         'description',
         'started_at',
         'stopped_at',
+        'resumed_at',
         'duration_minutes',
         'is_billable'
     ];
@@ -19,6 +20,7 @@ class TimeEntry extends Model
     protected $casts = [
         'started_at' => 'datetime',
         'stopped_at' => 'datetime',
+        'resumed_at' => 'datetime',
         'is_billable' => 'boolean'
     ];
 
