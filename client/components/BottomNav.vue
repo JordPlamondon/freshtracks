@@ -165,8 +165,6 @@ onMounted(() => {
   fetchActiveTimer()
 
   if (import.meta.client) {
-    window.addEventListener('timer-started', fetchActiveTimer)
-    window.addEventListener('timer-stopped', fetchActiveTimer)
     window.addEventListener('ws-timer-started', fetchActiveTimer)
     window.addEventListener('ws-timer-stopped', fetchActiveTimer)
   }
@@ -174,8 +172,6 @@ onMounted(() => {
 
 onUnmounted(() => {
   if (import.meta.client) {
-    window.removeEventListener('timer-started', fetchActiveTimer)
-    window.removeEventListener('timer-stopped', fetchActiveTimer)
     window.removeEventListener('ws-timer-started', fetchActiveTimer)
     window.removeEventListener('ws-timer-stopped', fetchActiveTimer)
   }
