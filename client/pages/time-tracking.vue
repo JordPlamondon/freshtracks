@@ -205,19 +205,19 @@ const navigateDay = (offset) => {
   selectedDate.value = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
 }
 
+const handleTimerStopped = () => {
+  fetchEntries()
+}
+
 onMounted(() => {
-  // Ensure selectedDate is set to client's local timezone (in case SSR had different value)
   selectedDate.value = getTodayStr()
 
   fetchEntries()
   fetchProjects()
-  // Listen for local updates from Timer.vue (no full refresh needed)
   window.addEventListener('timer-new-entry', handleNewEntry)
   window.addEventListener('timer-entry-updated', handleEntryUpdated)
-  // Listen for keyboard shortcuts
   window.addEventListener('keyboard-shortcut', handleKeyboardShortcut)
-
-  // Listen for WebSocket timer events (broadcast from layout)
+  window.addEventListener('timer-stopped', handleTimerStopped)
   window.addEventListener('ws-timer-started', handleWsTimerStarted)
   window.addEventListener('ws-timer-stopped', handleWsTimerStopped)
   window.addEventListener('ws-timer-deleted', handleWsTimerDeleted)
@@ -227,6 +227,7 @@ onUnmounted(() => {
   window.removeEventListener('timer-new-entry', handleNewEntry)
   window.removeEventListener('timer-entry-updated', handleEntryUpdated)
   window.removeEventListener('keyboard-shortcut', handleKeyboardShortcut)
+  window.removeEventListener('timer-stopped', handleTimerStopped)
   window.removeEventListener('ws-timer-started', handleWsTimerStarted)
   window.removeEventListener('ws-timer-stopped', handleWsTimerStopped)
   window.removeEventListener('ws-timer-deleted', handleWsTimerDeleted)
