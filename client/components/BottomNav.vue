@@ -141,11 +141,12 @@ const fetchActiveTimer = async () => {
 const handleTimerClick = async () => {
   if (activeTimer.value) {
     try {
-      await api.api(`/time-entries/${activeTimer.value.id}/stop`, {
+      const stoppedEntry = await api.api(`/time-entries/${activeTimer.value.id}/stop`, {
         method: 'POST'
       })
       activeTimer.value = null
       if (import.meta.client) {
+        window.dispatchEvent(new CustomEvent('timer-entry-updated', { detail: stoppedEntry }))
         window.dispatchEvent(new Event('timer-stopped'))
       }
     } catch (error) {
