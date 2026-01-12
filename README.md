@@ -19,7 +19,7 @@ A time tracking application for freelancers and small teams. Track billable hour
 - **Clients & Projects** - Manage clients with hourly rates, organize projects per client.
 - **Invoices** - Generate invoices from unbilled time entries.
 - **Keyboard Shortcuts** - Press `?` to see all shortcuts. `S` toggles timer, `G+H/T/A/R/P/C/I` navigates pages, `Cmd+K` opens command palette.
-- **Live Revenue** - Optional real-time revenue display with rolling number animations. Toggle in Settings.
+- **Live Revenue** - Optional real-time revenue display. Toggle in Settings.
 - **Mobile** - Responsive design with bottom navigation.
 
 ## Installation
