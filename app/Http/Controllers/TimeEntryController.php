@@ -3,9 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\TimeEntry;
-use App\Events\TimerStarted;
-use App\Events\TimerStopped;
 use App\Events\TimerDeleted;
+use App\Services\TimerService;
+use App\Http\Requests\StoreTimeEntryRequest;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
@@ -13,6 +13,11 @@ use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 class TimeEntryController extends Controller
 {
     use AuthorizesRequests;
+
+    public function __construct(
+        protected TimerService $timerService
+    ) {}
+
     public function index(Request $request)
     {
         $query = $request->user()->timeEntries()->with('project.client');
@@ -24,28 +29,14 @@ class TimeEntryController extends Controller
         return $query->orderBy('started_at', 'desc')->get();
     }
 
-    public function store(Request $request)
+    public function store(StoreTimeEntryRequest $request)
     {
-        $validated = $request->validate([
-            'project_id' => 'required|exists:projects,id',
-            'description' => 'nullable|string',
-            'is_billable' => 'boolean'
-        ]);
-
-        $validated['user_id'] = $request->user()->id;
-        $validated['started_at'] = Carbon::now();
-        $validated['resumed_at'] = Carbon::now();
-        $validated['duration_minutes'] = 0;
-
-        // Default is_billable to true if not provided
-        if (!isset($validated['is_billable'])) {
-            $validated['is_billable'] = true;
-        }
-
-        $timeEntry = TimeEntry::create($validated);
-
-        // Broadcast timer started
-        broadcast(new TimerStarted($timeEntry, $request->user()->id));
+        $timeEntry = $this->timerService->startTimer(
+            $request->user(),
+            $request->validated('project_id'),
+            $request->validated('description'),
+            $request->validated('is_billable') ?? true
+        );
 
         return response()->json($timeEntry->load('project.client'), 201);
     }
@@ -107,61 +98,29 @@ class TimeEntryController extends Controller
     {
         $this->authorize('update', $timeEntry);
 
-        if ($timeEntry->stopped_at) {
-            return response()->json(['message' => 'Timer already stopped'], 400);
+        try {
+            $timeEntry = $this->timerService->stopTimer($timeEntry, $request->user());
+            return response()->json($timeEntry->load('project.client'));
+        } catch (\InvalidArgumentException $e) {
+            return response()->json(['message' => $e->getMessage()], 400);
         }
-
-        $stoppedAt = Carbon::now();
-        // Use resumed_at for session duration calculation (falls back to started_at for older entries)
-        $sessionStart = $timeEntry->resumed_at ? Carbon::parse($timeEntry->resumed_at) : Carbon::parse($timeEntry->started_at);
-        $sessionDuration = abs($sessionStart->diffInMinutes($stoppedAt));
-
-        // Accumulate duration (add to existing duration from previous sessions)
-        $totalDuration = ($timeEntry->duration_minutes ?? 0) + $sessionDuration;
-
-        $timeEntry->update([
-            'stopped_at' => $stoppedAt,
-            'duration_minutes' => $totalDuration
-        ]);
-
-        // Broadcast timer stopped
-        broadcast(new TimerStopped($timeEntry->fresh(), $request->user()->id));
-
-        return response()->json($timeEntry->load('project.client'));
     }
 
     public function restart(Request $request, TimeEntry $timeEntry)
     {
         $this->authorize('update', $timeEntry);
 
-        if (!$timeEntry->stopped_at) {
-            return response()->json(['message' => 'Timer is already running'], 400);
+        try {
+            $timeEntry = $this->timerService->restartTimer($timeEntry, $request->user());
+            return response()->json($timeEntry->load('project.client'));
+        } catch (\InvalidArgumentException $e) {
+            return response()->json(['message' => $e->getMessage()], 400);
         }
-
-        // Restart the entry:
-        // - Keep started_at unchanged (preserves which day the entry belongs to)
-        // - Set resumed_at to now (for live timer calculation)
-        // - Clear stopped_at
-        // - duration_minutes already contains accumulated time from previous sessions
-        $timeEntry->update([
-            'resumed_at' => Carbon::now(),
-            'stopped_at' => null
-        ]);
-
-        // Broadcast timer started (restart)
-        broadcast(new TimerStarted($timeEntry->fresh(), $request->user()->id));
-
-        return response()->json($timeEntry->load('project.client'));
     }
 
     public function active(Request $request)
     {
-        $activeEntry = $request->user()
-            ->timeEntries()
-            ->whereNull('stopped_at')
-            ->with('project.client')
-            ->first();
-
+        $activeEntry = $this->timerService->getActiveTimer($request->user());
         return response()->json($activeEntry);
     }
 }

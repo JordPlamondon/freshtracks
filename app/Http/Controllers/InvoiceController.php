@@ -3,15 +3,17 @@
 namespace App\Http\Controllers;
 
 use App\Models\Invoice;
-use App\Models\InvoiceItem;
-use App\Models\TimeEntry;
 use App\Models\Client;
+use App\Services\InvoiceGenerationService;
+use App\Http\Requests\StoreInvoiceRequest;
 use Illuminate\Http\Request;
-use Carbon\Carbon;
-use Illuminate\Support\Facades\DB;
 
 class InvoiceController extends Controller
 {
+    public function __construct(
+        protected InvoiceGenerationService $invoiceService
+    ) {}
+
     public function index(Request $request)
     {
         return $request->user()
@@ -21,19 +23,12 @@ class InvoiceController extends Controller
             ->get();
     }
 
-    public function store(Request $request)
+    public function store(StoreInvoiceRequest $request)
     {
-        $validated = $request->validate([
-            'client_id' => 'required|exists:clients,id',
-            'issue_date' => 'required|date',
-            'due_date' => 'required|date|after:issue_date',
-            'status' => 'in:draft,sent,paid,overdue',
-            'total_amount' => 'required|numeric|min:0'
+        $invoice = Invoice::create([
+            ...$request->validated(),
+            'user_id' => $request->user()->id,
         ]);
-
-        $validated['user_id'] = $request->user()->id;
-
-        $invoice = Invoice::create($validated);
 
         return response()->json($invoice->load('client'), 201);
     }
@@ -75,45 +70,17 @@ class InvoiceController extends Controller
         ]);
 
         $client = Client::findOrFail($validated['client_id']);
-        $timeEntries = TimeEntry::whereIn('id', $validated['time_entry_ids'])
-            ->whereNotNull('stopped_at')
-            ->with('project')
-            ->get();
 
-        if ($timeEntries->isEmpty()) {
-            return response()->json(['message' => 'No valid time entries found'], 400);
+        try {
+            $invoice = $this->invoiceService->generateFromTimeEntries(
+                $client,
+                $request->user(),
+                $validated['time_entry_ids'],
+                $validated['due_days'] ?? 30
+            );
+            return response()->json($invoice, 201);
+        } catch (\InvalidArgumentException $e) {
+            return response()->json(['message' => $e->getMessage()], 400);
         }
-
-        return DB::transaction(function () use ($request, $client, $timeEntries, $validated) {
-            $totalAmount = 0;
-
-            $invoice = Invoice::create([
-                'client_id' => $client->id,
-                'user_id' => $request->user()->id,
-                'issue_date' => Carbon::now(),
-                'due_date' => Carbon::now()->addDays($validated['due_days'] ?? 30),
-                'status' => 'draft',
-                'total_amount' => 0
-            ]);
-
-            foreach ($timeEntries as $entry) {
-                $hours = $entry->duration_minutes / 60;
-                $amount = $hours * $client->hourly_rate;
-                $totalAmount += $amount;
-
-                InvoiceItem::create([
-                    'invoice_id' => $invoice->id,
-                    'time_entry_id' => $entry->id,
-                    'description' => $entry->description ?? $entry->project->name,
-                    'hours' => $hours,
-                    'rate' => $client->hourly_rate,
-                    'amount' => $amount
-                ]);
-            }
-
-            $invoice->update(['total_amount' => $totalAmount]);
-
-            return response()->json($invoice->load('client', 'items'), 201);
-        });
     }
 }
