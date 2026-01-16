@@ -440,6 +440,8 @@
 const api = useApi()
 const { currentTime } = useCurrentTime()
 const { settings, fetchSettings } = useSettings()
+const { formatDuration, formatDurationHMS, getClientColor, formatTimeRange } = useFormatting()
+const { getTodayStr, getDateStr } = useDateUtils()
 
 const props = defineProps({
   entries: {
@@ -467,15 +469,9 @@ const restartingId = ref(null)
 const showPopoverForEntry = ref(null)
 const popoverPosition = ref({ top: 0, left: 0 })
 
-const getTodayStr = () => {
-  const today = new Date()
-  return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
-}
-
 const isEntryFromToday = (entry) => {
   const date = new Date(entry.started_at)
-  const entryDate = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
-  return entryDate === getTodayStr()
+  return getDateStr(date) === getTodayStr()
 }
 
 const closePopover = () => {
@@ -604,8 +600,7 @@ const getLiveDuration = (entry) => {
 const getDayDurationLive = (dateStr) => {
   const dayEntries = props.entries.filter(entry => {
     const date = new Date(entry.started_at)
-    const entryDate = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
-    return entryDate === dateStr
+    return getDateStr(date) === dateStr
   })
 
   let totalSeconds = 0
@@ -632,71 +627,10 @@ const dayHasActiveTimer = (dateStr) => {
   return props.entries.some(entry => {
     if (entry.stopped_at) return false
     const date = new Date(entry.started_at)
-    const entryDate = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
-    return entryDate === dateStr
+    return getDateStr(date) === dateStr
   })
 }
 
-const formatDuration = (minutes) => {
-  if (!minutes) return '0h'
-  const hours = Math.floor(minutes / 60)
-  const mins = Math.floor(minutes % 60)
-  return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`
-}
-
-const formatDurationHMS = (minutes) => {
-  if (!minutes) return '0:00:00'
-  const totalSeconds = Math.floor(minutes * 60)
-  const hours = Math.floor(totalSeconds / 3600)
-  const mins = Math.floor((totalSeconds % 3600) / 60)
-  const secs = Math.floor(totalSeconds % 60)
-  return `${hours}:${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`
-}
-
-const formatTimeRange = (start, end) => {
-  const startDate = new Date(start)
-  const startTime = startDate.toLocaleTimeString('en-US', {
-    hour: 'numeric',
-    minute: '2-digit',
-    hour12: true
-  })
-
-  if (!end) {
-    return `${startTime} - Running`
-  }
-
-  const endDate = new Date(end)
-  const endTime = endDate.toLocaleTimeString('en-US', {
-    hour: 'numeric',
-    minute: '2-digit',
-    hour12: true
-  })
-
-  return `${startTime} - ${endTime}`
-}
-
-// Generate consistent color for client names
-const getClientColor = (clientName) => {
-  if (!clientName) return '#cbd5e0'
-
-  const colors = [
-    '#7a9ec2', // slate blue
-    '#8fb5a3', // sage green
-    '#c4a67c', // warm sand
-    '#a89cc4', // soft purple
-    '#c49a9a', // dusty rose
-    '#7eb8b8', // teal
-    '#b8a07a', // warm taupe
-    '#9ab4c4'  // steel blue
-  ]
-
-  let hash = 0
-  for (let i = 0; i < clientName.length; i++) {
-    hash = clientName.charCodeAt(i) + ((hash << 5) - hash)
-  }
-
-  return colors[Math.abs(hash) % colors.length]
-}
 
 const getWeekDays = () => {
   const [year, month, day] = props.selectedDate.split('-').map(Number)
@@ -712,7 +646,7 @@ const getWeekDays = () => {
   for (let i = 0; i < 7; i++) {
     const date = new Date(monday)
     date.setDate(monday.getDate() + i)
-    const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+    const dateStr = getDateStr(date)
 
     days.push({
       date: dateStr,
@@ -732,8 +666,7 @@ const weekDays = computed(() => {
 
   props.entries.forEach(entry => {
     const date = new Date(entry.started_at)
-    const entryDate = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
-    const day = days.find(d => d.date === entryDate)
+    const day = days.find(d => d.date === getDateStr(date))
     if (day) {
       day.hours += entry.duration_minutes || 0
     }
@@ -749,8 +682,7 @@ const weekTotal = computed(() => {
 const dailyEntries = computed(() => {
   return props.entries.filter(entry => {
     const date = new Date(entry.started_at)
-    const entryDate = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
-    return entryDate === props.selectedDate
+    return getDateStr(date) === props.selectedDate
   }).sort((a, b) => new Date(b.started_at) - new Date(a.started_at))
 })
 
@@ -776,9 +708,7 @@ const navigateDay = (direction) => {
   const [year, month, day] = props.selectedDate.split('-').map(Number)
   const currentDate = new Date(year, month - 1, day)
   currentDate.setDate(currentDate.getDate() + direction)
-
-  const newDateStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(currentDate.getDate()).padStart(2, '0')}`
-  emit('selectDay', newDateStr)
+  emit('selectDay', getDateStr(currentDate))
 }
 
 const goToToday = () => {
@@ -792,8 +722,7 @@ const todaysRevenue = computed(() => {
     .filter(entry => {
       if (!entry.is_billable || !entry.stopped_at) return false
       const date = new Date(entry.started_at)
-      const entryDate = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
-      return entryDate === todayStr
+      return getDateStr(date) === todayStr
     })
     .reduce((sum, entry) => {
       const hours = (entry.duration_minutes || 0) / 60
@@ -806,9 +735,7 @@ const todaysRevenue = computed(() => {
 
   if (activeEntry && activeEntry.is_billable) {
     const date = new Date(activeEntry.started_at)
-    const entryDate = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
-
-    if (entryDate === todayStr) {
+    if (getDateStr(date) === todayStr) {
       const sessionStart = new Date(activeEntry.resumed_at || activeEntry.started_at)
       const currentSessionMs = Math.max(0, currentTime.value - sessionStart.getTime())
       const currentSessionMinutes = currentSessionMs / 1000 / 60
@@ -821,14 +748,6 @@ const todaysRevenue = computed(() => {
 
   return completedRevenue + liveRevenue
 })
-
-const formatRevenue = (amount) => {
-  if (!amount) return '0.00'
-  return parseFloat(amount).toLocaleString('en-US', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2
-  })
-}
 
 onMounted(() => {
   fetchSettings()

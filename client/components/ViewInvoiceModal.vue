@@ -114,6 +114,8 @@
 </template>
 
 <script setup>
+const { formatAmount } = useFormatting()
+
 const props = defineProps({
   isOpen: {
     type: Boolean,
@@ -153,11 +155,6 @@ const formatDate = (dateString) => {
     day: 'numeric',
     year: 'numeric'
   })
-}
-
-const formatAmount = (amount) => {
-  if (!amount) return '0.00'
-  return parseFloat(amount).toFixed(2)
 }
 
 const formatHours = (hours) => {

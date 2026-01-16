@@ -254,6 +254,7 @@ definePageMeta({
 const api = useApi()
 const { currentTime } = useCurrentTime()
 const { settings, fetchSettings } = useSettings()
+const { formatHours, formatAmount, getClientColor } = useFormatting()
 
 const loading = ref(true)
 const entries = ref([])
@@ -462,24 +463,6 @@ const maxDailyHours = computed(() => {
   return max > 0 ? max : 8
 })
 
-const getClientColor = (clientName) => {
-  if (!clientName) return '#cbd5e0'
-  const colors = [
-    '#7a9ec2', // slate blue
-    '#8fb5a3', // sage green
-    '#c4a67c', // warm sand
-    '#a89cc4', // soft purple
-    '#c49a9a', // dusty rose
-    '#7eb8b8', // teal
-    '#b8a07a', // warm taupe
-    '#9ab4c4'  // steel blue
-  ]
-  let hash = 0
-  for (let i = 0; i < clientName.length; i++) {
-    hash = clientName.charCodeAt(i) + ((hash << 5) - hash)
-  }
-  return colors[Math.abs(hash) % colors.length]
-}
 
 const billableChartSeries = computed(() => {
   if (totalHours.value === 0) return []
@@ -661,22 +644,6 @@ const projectChartOptions = computed(() => ({
   }
 }))
 
-const formatHours = (hours) => {
-  if (!hours || hours === 0) return '0h'
-  const h = Math.floor(hours)
-  const m = Math.round((hours - h) * 60)
-  if (h === 0) return `${m}m`
-  if (m === 0) return `${h}h`
-  return `${h}h ${m}m`
-}
-
-const formatAmount = (amount) => {
-  if (!amount) return '0.00'
-  return parseFloat(amount).toLocaleString('en-US', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2
-  })
-}
 
 const formatTrendPercent = (trend) => {
   if (trend === null) return ''

@@ -86,6 +86,8 @@
 </template>
 
 <script setup>
+const { formatAmount } = useFormatting()
+
 const props = defineProps({
   invoice: {
     type: Object,
@@ -150,9 +152,5 @@ const formatDate = (dateString) => {
   })
 }
 
-const formatAmount = (amount) => {
-  if (!amount) return '0.00'
-  return parseFloat(amount).toFixed(2)
-}
 </script>
 

@@ -146,6 +146,8 @@
 </template>
 
 <script setup>
+const { formatAmount } = useFormatting()
+
 const props = defineProps({
   isOpen: {
     type: Boolean,
@@ -202,11 +204,6 @@ const formatDate = (dateString) => {
 const formatHours = (minutes) => {
   if (!minutes) return '0.00'
   return (minutes / 60).toFixed(2)
-}
-
-const formatAmount = (amount) => {
-  if (!amount) return '0.00'
-  return parseFloat(amount).toFixed(2)
 }
 
 const toggleEntry = (id) => {

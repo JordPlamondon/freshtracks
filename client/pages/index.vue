@@ -210,6 +210,8 @@ definePageMeta({
 
 const api = useApi()
 const { currentTime } = useCurrentTime()
+const { formatAmount, getClientColor } = useFormatting()
+const { getTodayStr, getDateStr, getWeekStart, getMonthStart } = useDateUtils()
 
 const loading = ref(true)
 const stopping = ref(false)
@@ -276,25 +278,6 @@ const formattedDuration = computed(() => {
   return `${hours}:${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`
 })
 
-const getTodayStr = () => {
-  const today = new Date()
-  return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
-}
-
-const getWeekStart = () => {
-  const today = new Date()
-  const day = today.getDay()
-  const diff = today.getDate() - (day === 0 ? 6 : day - 1)
-  const monday = new Date(today)
-  monday.setDate(diff)
-  monday.setHours(0, 0, 0, 0)
-  return monday
-}
-
-const getMonthStart = () => {
-  const today = new Date()
-  return new Date(today.getFullYear(), today.getMonth(), 1)
-}
 const todayMinutes = computed(() => {
   const todayStr = getTodayStr()
   return entries.value
@@ -358,17 +341,11 @@ const formatDurationHM = (minutes) => {
   return `${hours}h ${mins}m`
 }
 
-const formatAmount = (amount) => {
-  if (!amount) return '0.00'
-  return parseFloat(amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-}
-
 const formatTimestamp = (dateStr) => {
   const date = new Date(dateStr)
   const now = new Date()
   const todayStr = getTodayStr()
-
-  const entryDateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+  const entryDateStr = getDateStr(date)
 
   const time = date.toLocaleTimeString('en-US', {
     hour: 'numeric',
@@ -382,9 +359,7 @@ const formatTimestamp = (dateStr) => {
 
   const yesterday = new Date(now)
   yesterday.setDate(yesterday.getDate() - 1)
-  const yesterdayStr = `${yesterday.getFullYear()}-${String(yesterday.getMonth() + 1).padStart(2, '0')}-${String(yesterday.getDate()).padStart(2, '0')}`
-
-  if (entryDateStr === yesterdayStr) {
+  if (getDateStr(yesterday) === entryDateStr) {
     return `Yesterday ${time}`
   }
 
@@ -392,27 +367,6 @@ const formatTimestamp = (dateStr) => {
   return `${dayNames[date.getDay()]} ${time}`
 }
 
-const getClientColor = (clientName) => {
-  if (!clientName) return '#cbd5e0'
-
-  const colors = [
-    '#7a9ec2', // slate blue
-    '#8fb5a3', // sage green
-    '#c4a67c', // warm sand
-    '#a89cc4', // soft purple
-    '#c49a9a', // dusty rose
-    '#7eb8b8', // teal
-    '#b8a07a', // warm taupe
-    '#9ab4c4'  // steel blue
-  ]
-
-  let hash = 0
-  for (let i = 0; i < clientName.length; i++) {
-    hash = clientName.charCodeAt(i) + ((hash << 5) - hash)
-  }
-
-  return colors[Math.abs(hash) % colors.length]
-}
 
 const handleTimerStarted = () => {
   fetchActiveTimer()

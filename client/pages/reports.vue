@@ -316,6 +316,8 @@ definePageMeta({
 })
 
 const api = useApi()
+const { formatHours, formatAmount, getClientColor } = useFormatting()
+const { getDateStr } = useDateUtils()
 
 const loading = ref(true)
 const entries = ref([])
@@ -462,12 +464,7 @@ const calculateAmount = (entry) => {
   return hours * rate
 }
 
-const formatDateISO = (date) => {
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  return `${year}-${month}-${day}`
-}
+const formatDateISO = (date) => getDateStr(date)
 
 const formatDateDisplay = (date) => {
   return date.toLocaleDateString('en-US', {
@@ -486,41 +483,11 @@ const formatDate = (dateStr) => {
   })
 }
 
-const formatHours = (hours) => {
-  if (!hours || hours === 0) return '0h'
-  const h = Math.floor(hours)
-  const m = Math.round((hours - h) * 60)
-  if (h === 0) return `${m}m`
-  if (m === 0) return `${h}h`
-  return `${h}h ${m}m`
-}
-
 const formatDuration = (minutes) => {
   if (!minutes) return '0:00'
   const h = Math.floor(minutes / 60)
   const m = Math.floor(minutes % 60)
   return `${h}:${String(m).padStart(2, '0')}`
-}
-
-const formatAmount = (amount) => {
-  if (!amount) return '0.00'
-  return parseFloat(amount).toLocaleString('en-US', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2
-  })
-}
-
-const getClientColor = (clientName) => {
-  if (!clientName) return '#cbd5e0'
-  const colors = [
-    '#7a9ec2', '#8fb5a3', '#c4a67c', '#a89cc4',
-    '#c49a9a', '#7eb8b8', '#b8a07a', '#9ab4c4'
-  ]
-  let hash = 0
-  for (let i = 0; i < clientName.length; i++) {
-    hash = clientName.charCodeAt(i) + ((hash << 5) - hash)
-  }
-  return colors[Math.abs(hash) % colors.length]
 }
 
 // Export to CSV
