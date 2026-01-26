@@ -45,15 +45,12 @@ definePageMeta({
 })
 
 const api = useApi()
+const { getTodayStr, getDateStr } = useDateUtils()
 const entries = ref([])
 const allProjects = ref([])
 const loading = ref(true)
 const deletingId = ref(null)
 
-const getTodayStr = () => {
-  const today = new Date()
-  return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
-}
 const selectedDate = ref(getTodayStr())
 const showEditModal = ref(false)
 const editingEntry = ref(null)
@@ -202,7 +199,7 @@ const navigateDay = (offset) => {
   const [year, month, day] = selectedDate.value.split('-').map(Number)
   const date = new Date(year, month - 1, day)
   date.setDate(date.getDate() + offset)
-  selectedDate.value = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+  selectedDate.value = getDateStr(date)
 }
 
 const handleTimerStopped = () => {

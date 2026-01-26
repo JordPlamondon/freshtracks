@@ -74,4 +74,15 @@ class TimerService
             ->with('project.client')
             ->first();
     }
+
+    public static function calculateDuration(string $startedAt, ?string $stoppedAt): ?int
+    {
+        if (!$stoppedAt) {
+            return null;
+        }
+
+        $start = Carbon::parse($startedAt);
+        $stop = Carbon::parse($stoppedAt);
+        return abs($start->diffInMinutes($stop));
+    }
 }

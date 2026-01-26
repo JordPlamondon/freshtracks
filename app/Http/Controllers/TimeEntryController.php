@@ -7,7 +7,6 @@ use App\Events\TimerDeleted;
 use App\Services\TimerService;
 use App\Http\Requests\StoreTimeEntryRequest;
 use Illuminate\Http\Request;
-use Carbon\Carbon;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 class TimeEntryController extends Controller
@@ -62,9 +61,10 @@ class TimeEntryController extends Controller
             ]);
 
             if (isset($validated['started_at']) && isset($validated['stopped_at'])) {
-                $start = Carbon::parse($validated['started_at']);
-                $stop = Carbon::parse($validated['stopped_at']);
-                $validated['duration_minutes'] = abs($start->diffInMinutes($stop));
+                $validated['duration_minutes'] = TimerService::calculateDuration(
+                    $validated['started_at'],
+                    $validated['stopped_at']
+                );
             }
 
             $timeEntry->update($validated);

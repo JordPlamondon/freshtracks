@@ -123,14 +123,23 @@ const props = defineProps({
 
 const emit = defineEmits(['close', 'save'])
 
-const api = useApi()
-const saving = ref(false)
-
 const form = ref({
   client_id: '',
   name: '',
   description: '',
   status: 'active'
+})
+
+const { saving, save: saveForm } = useModalForm({
+  endpoint: '/projects',
+  entityName: 'project',
+  getFormData: () => ({
+    client_id: form.value.client_id,
+    name: form.value.name,
+    description: form.value.description || null,
+    status: form.value.status
+  }),
+  entityId: () => props.project?.id
 })
 
 watch(() => props.project, (project) => {
@@ -155,38 +164,5 @@ const close = () => {
   emit('close')
 }
 
-const save = async () => {
-  if (saving.value) return
-
-  try {
-    saving.value = true
-
-    const data = {
-      client_id: form.value.client_id,
-      name: form.value.name,
-      description: form.value.description || null,
-      status: form.value.status
-    }
-
-    if (props.project) {
-      await api.api(`/projects/${props.project.id}`, {
-        method: 'PUT',
-        body: data
-      })
-    } else {
-      await api.api('/projects', {
-        method: 'POST',
-        body: data
-      })
-    }
-
-    emit('save')
-    close()
-  } catch (error) {
-    console.error('Failed to save project:', error)
-    alert('Failed to save project. Please try again.')
-  } finally {
-    saving.value = false
-  }
-}
+const save = () => saveForm(emit)
 </script>

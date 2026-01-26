@@ -160,12 +160,10 @@ class WidgetController extends Controller
             'is_billable' => 'required|boolean',
         ]);
 
-        $durationMinutes = null;
-        if ($validated['stopped_at']) {
-            $startedAt = Carbon::parse($validated['started_at']);
-            $stoppedAt = Carbon::parse($validated['stopped_at']);
-            $durationMinutes = abs($startedAt->diffInMinutes($stoppedAt));
-        }
+        $durationMinutes = TimerService::calculateDuration(
+            $validated['started_at'],
+            $validated['stopped_at']
+        );
 
         $timeEntry->update([
             'project_id' => $validated['project_id'],
