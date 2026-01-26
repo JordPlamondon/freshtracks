@@ -1,16 +1,30 @@
+interface Shortcut {
+  keys: string[]
+  description: string
+  action: string
+  isMeta?: boolean
+  isSequence?: boolean
+}
+
+interface Shortcuts {
+  global: Shortcut[]
+  navigation: Shortcut[]
+  timeTracking: Shortcut[]
+}
+
 const showShortcutsModal = ref(false)
 const showCommandPalette = ref(false)
-const waitingForSecondKey = ref(null)
-const waitingTimeout = ref(null)
+const waitingForSecondKey = ref<string | null>(null)
+const waitingTimeout = ref<ReturnType<typeof setTimeout> | null>(null)
 
-const isInputFocused = () => {
+const isInputFocused = (): boolean => {
   const active = document.activeElement
   if (!active) return false
   const tag = active.tagName?.toLowerCase()
-  return ['input', 'textarea', 'select'].includes(tag) || active.isContentEditable
+  return ['input', 'textarea', 'select'].includes(tag) || (active as HTMLElement).isContentEditable
 }
 
-const shortcuts = {
+const shortcuts: Shortcuts = {
   global: [
     { keys: ['S'], description: 'Start / Stop timer', action: 'toggle-timer' },
     { keys: ['?'], description: 'Show keyboard shortcuts', action: 'show-shortcuts' },
@@ -32,15 +46,15 @@ const shortcuts = {
   ]
 }
 
-export const useKeyboardShortcuts = () => {
+export function useKeyboardShortcuts() {
   const router = useRouter()
   const route = useRoute()
 
-  const emitShortcut = (action) => {
+  const emitShortcut = (action: string) => {
     window.dispatchEvent(new CustomEvent('keyboard-shortcut', { detail: { action } }))
   }
 
-  const executeAction = (action) => {
+  const executeAction = (action: string) => {
     switch (action) {
       case 'show-shortcuts':
         showShortcutsModal.value = true
@@ -85,7 +99,7 @@ export const useKeyboardShortcuts = () => {
     }
   }
 
-  const handleKeydown = (e) => {
+  const handleKeydown = (e: KeyboardEvent) => {
     if (e.key === 'Escape') {
       if (showCommandPalette.value) {
         showCommandPalette.value = false
@@ -120,10 +134,10 @@ export const useKeyboardShortcuts = () => {
     const key = e.key.toLowerCase()
 
     if (waitingForSecondKey.value === 'g') {
-      clearTimeout(waitingTimeout.value)
+      clearTimeout(waitingTimeout.value!)
       waitingForSecondKey.value = null
 
-      const sequenceMap = {
+      const sequenceMap: Record<string, string> = {
         'h': 'nav-home',
         't': 'nav-time-tracking',
         'a': 'nav-analytics',

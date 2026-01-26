@@ -41,6 +41,8 @@
 </template>
 
 <script setup>
+const { getTodayStr, getDateStr, getWeekStart } = useDateUtils()
+
 const props = defineProps({
   modelValue: {
     type: String,
@@ -58,43 +60,17 @@ const formattedDate = computed(() => {
 })
 
 const isCurrentWeek = computed(() => {
-  const today = new Date()
-  const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
-
-  // Get Monday of current week
-  const todayDay = today.getDay()
-  const todayMonday = new Date(today)
-  todayMonday.setDate(today.getDate() - (todayDay === 0 ? 6 : todayDay - 1))
-  const todayMondayStr = `${todayMonday.getFullYear()}-${String(todayMonday.getMonth() + 1).padStart(2, '0')}-${String(todayMonday.getDate()).padStart(2, '0')}`
-
-  // Get Monday of selected week
+  const todayMonday = getWeekStart()
   const [year, month, day] = props.modelValue.split('-').map(Number)
-  const selected = new Date(year, month - 1, day)
-  const selectedDay = selected.getDay()
-  const selectedMonday = new Date(selected)
-  selectedMonday.setDate(selected.getDate() - (selectedDay === 0 ? 6 : selectedDay - 1))
-  const selectedMondayStr = `${selectedMonday.getFullYear()}-${String(selectedMonday.getMonth() + 1).padStart(2, '0')}-${String(selectedMonday.getDate()).padStart(2, '0')}`
-
-  return todayMondayStr === selectedMondayStr
+  const selectedMonday = getWeekStart(new Date(year, month - 1, day))
+  return getDateStr(todayMonday) === getDateStr(selectedMonday)
 })
-
-const getMondayOfWeek = (dateStr) => {
-  const [year, month, day] = dateStr.split('-').map(Number)
-  const date = new Date(year, month - 1, day)
-  const dayOfWeek = date.getDay()
-  const monday = new Date(date)
-  monday.setDate(date.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1))
-  return `${monday.getFullYear()}-${String(monday.getMonth() + 1).padStart(2, '0')}-${String(monday.getDate()).padStart(2, '0')}`
-}
 
 const previousWeek = () => {
   const [year, month, day] = props.modelValue.split('-').map(Number)
   const current = new Date(year, month - 1, day)
   current.setDate(current.getDate() - 7)
-
-  // Set to Monday of the previous week
-  const mondayStr = getMondayOfWeek(`${current.getFullYear()}-${String(current.getMonth() + 1).padStart(2, '0')}-${String(current.getDate()).padStart(2, '0')}`)
-  emit('update:modelValue', mondayStr)
+  emit('update:modelValue', getDateStr(getWeekStart(current)))
 }
 
 const nextWeek = () => {
@@ -102,30 +78,17 @@ const nextWeek = () => {
     const [year, month, day] = props.modelValue.split('-').map(Number)
     const current = new Date(year, month - 1, day)
     current.setDate(current.getDate() + 7)
-
-    // Check if next week is the current week
-    const nextWeekStr = `${current.getFullYear()}-${String(current.getMonth() + 1).padStart(2, '0')}-${String(current.getDate()).padStart(2, '0')}`
-    const nextWeekMonday = getMondayOfWeek(nextWeekStr)
-
-    const today = new Date()
-    const todayDay = today.getDay()
-    const todayMonday = new Date(today)
-    todayMonday.setDate(today.getDate() - (todayDay === 0 ? 6 : todayDay - 1))
-    const todayMondayStr = `${todayMonday.getFullYear()}-${String(todayMonday.getMonth() + 1).padStart(2, '0')}-${String(todayMonday.getDate()).padStart(2, '0')}`
-
-    // If next week is current week, go to today; otherwise go to Monday
-    if (nextWeekMonday === todayMondayStr) {
-      const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
-      emit('update:modelValue', todayStr)
+    const nextWeekMonday = getWeekStart(current)
+    const todayMonday = getWeekStart()
+    if (getDateStr(nextWeekMonday) === getDateStr(todayMonday)) {
+      emit('update:modelValue', getTodayStr())
     } else {
-      emit('update:modelValue', nextWeekMonday)
+      emit('update:modelValue', getDateStr(nextWeekMonday))
     }
   }
 }
 
 const goToToday = () => {
-  const today = new Date()
-  const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
-  emit('update:modelValue', todayStr)
+  emit('update:modelValue', getTodayStr())
 }
 </script>

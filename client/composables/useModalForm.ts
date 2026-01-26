@@ -3,6 +3,7 @@ interface UseModalFormOptions<T> {
   entityName: string
   getFormData: () => T
   entityId?: () => number | null
+  validate?: () => boolean
 }
 
 export function useModalForm<T>(options: UseModalFormOptions<T>) {
@@ -11,6 +12,10 @@ export function useModalForm<T>(options: UseModalFormOptions<T>) {
 
   const save = async (emit: (event: 'save' | 'close') => void) => {
     if (saving.value) return false
+
+    if (options.validate && !options.validate()) {
+      return false
+    }
 
     try {
       saving.value = true

@@ -2,10 +2,10 @@
 // All components using this will be in sync since they share the same ref
 
 const currentTime = ref(Date.now())
-let intervalId = null
+let intervalId: ReturnType<typeof setInterval> | null = null
 let subscriberCount = 0
 
-export const useCurrentTime = () => {
+export function useCurrentTime() {
   const startInterval = () => {
     if (intervalId === null) {
       // Update frequently for accurate timer display

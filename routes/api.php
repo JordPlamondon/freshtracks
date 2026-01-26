@@ -2,7 +2,6 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\WidgetController;
 
 Route::middleware(['auth:sanctum'])->get('/user', function (Request $request) {
     return $request->user();
@@ -13,17 +12,17 @@ Route::post('/register', [App\Http\Controllers\AuthController::class, 'register'
 Route::post('/login', [App\Http\Controllers\AuthController::class, 'login']);
 
 Route::prefix('widget')->group(function () {
-    Route::get('/active-timer', [WidgetController::class, 'activeTimer']);
-    Route::get('/projects', [WidgetController::class, 'projects']);
-    Route::get('/time-entries', [WidgetController::class, 'timeEntries']);
-    Route::post('/time-entries', [WidgetController::class, 'startTimer']);
-    Route::post('/time-entries/{timeEntry}/stop', [WidgetController::class, 'stopTimer']);
-    Route::post('/time-entries/{timeEntry}/restart', [WidgetController::class, 'restartTimer']);
-    Route::put('/time-entries/{timeEntry}', [WidgetController::class, 'updateEntry']);
-    Route::delete('/time-entries/{timeEntry}', [WidgetController::class, 'deleteEntry']);
-    Route::get('/clients', [WidgetController::class, 'clients']);
-    Route::get('/clients/{client}/projects', [WidgetController::class, 'clientProjects']);
-    Route::get('/settings', [WidgetController::class, 'settings']);
+    Route::get('/active-timer', [App\Http\Controllers\WidgetController::class, 'activeTimer']);
+    Route::get('/projects', [App\Http\Controllers\WidgetController::class, 'projects']);
+    Route::get('/time-entries', [App\Http\Controllers\WidgetController::class, 'timeEntries']);
+    Route::post('/time-entries', [App\Http\Controllers\WidgetController::class, 'startTimer']);
+    Route::post('/time-entries/{timeEntry}/stop', [App\Http\Controllers\WidgetController::class, 'stopTimer']);
+    Route::post('/time-entries/{timeEntry}/restart', [App\Http\Controllers\WidgetController::class, 'restartTimer']);
+    Route::put('/time-entries/{timeEntry}', [App\Http\Controllers\WidgetController::class, 'updateEntry']);
+    Route::delete('/time-entries/{timeEntry}', [App\Http\Controllers\WidgetController::class, 'deleteEntry']);
+    Route::get('/clients', [App\Http\Controllers\WidgetController::class, 'clients']);
+    Route::get('/clients/{client}/projects', [App\Http\Controllers\WidgetController::class, 'clientProjects']);
+    Route::get('/settings', [App\Http\Controllers\WidgetController::class, 'settings']);
 });
 
 Route::middleware('auth:sanctum')->group(function () {

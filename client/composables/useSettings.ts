@@ -1,4 +1,4 @@
-export const useSettings = () => {
+export function useSettings() {
   const api = useApi()
   const settings = useState('userSettings', () => ({
     show_live_revenue: true

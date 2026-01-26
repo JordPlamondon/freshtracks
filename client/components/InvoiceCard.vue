@@ -1,5 +1,5 @@
 <template>
-  <div class="invoice-card bg-white rounded-lg p-3 md:p-4 shadow-[0_1px_2px_rgba(0,0,0,0.12)] hover:shadow-md transition-shadow">
+  <div class="card bg-white rounded-lg p-3 md:p-4 shadow-[0_1px_2px_rgba(0,0,0,0.12)] hover:shadow-md transition-shadow">
     <div class="flex flex-col md:flex-row md:justify-between md:items-start gap-3">
       <div class="flex-1 min-w-0">
         <!-- Client Name -->

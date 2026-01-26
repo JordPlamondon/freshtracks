@@ -121,6 +121,8 @@
 </template>
 
 <script setup>
+const { getDateStr } = useDateUtils()
+
 const props = defineProps({
   isOpen: {
     type: Boolean,
@@ -138,9 +140,6 @@ const props = defineProps({
 
 const emit = defineEmits(['close', 'save'])
 
-const api = useApi()
-const saving = ref(false)
-
 const form = ref({
   project_id: '',
   description: '',
@@ -150,35 +149,58 @@ const form = ref({
   is_billable: true
 })
 
-// Track original time values to detect if user changed them
 const originalTimes = ref({
   date: '',
   start_time: '',
   end_time: ''
 })
 
+const timesChanged = computed(() =>
+  form.value.date !== originalTimes.value.date ||
+  form.value.start_time !== originalTimes.value.start_time ||
+  form.value.end_time !== originalTimes.value.end_time
+)
+
+const { saving, save: saveForm } = useModalForm({
+  endpoint: '/time-entries',
+  entityName: 'time entry',
+  getFormData: () => ({
+    project_id: form.value.project_id,
+    description: form.value.description || null,
+    is_billable: form.value.is_billable,
+    ...(timesChanged.value && {
+      started_at: new Date(`${form.value.date}T${form.value.start_time}`).toISOString(),
+      stopped_at: new Date(`${form.value.date}T${form.value.end_time}`).toISOString()
+    })
+  }),
+  entityId: () => props.entry?.id,
+  validate: () => {
+    if (!props.entry) return false
+    if (timesChanged.value) {
+      const startDateTime = new Date(`${form.value.date}T${form.value.start_time}`)
+      const stopDateTime = new Date(`${form.value.date}T${form.value.end_time}`)
+      if (stopDateTime <= startDateTime) {
+        alert('End time must be after start time.')
+        return false
+      }
+    }
+    return true
+  }
+})
+
+const formatTime = (date) => {
+  const hours = String(date.getHours()).padStart(2, '0')
+  const minutes = String(date.getMinutes()).padStart(2, '0')
+  const seconds = String(date.getSeconds()).padStart(2, '0')
+  return `${hours}:${minutes}:${seconds}`
+}
+
 watch(() => props.entry, (entry) => {
   if (entry) {
     const started = new Date(entry.started_at)
     const stopped = entry.stopped_at ? new Date(entry.stopped_at) : new Date()
 
-    // Format date in local timezone (not UTC)
-    const formatDate = (date) => {
-      const year = date.getFullYear()
-      const month = String(date.getMonth() + 1).padStart(2, '0')
-      const day = String(date.getDate()).padStart(2, '0')
-      return `${year}-${month}-${day}`
-    }
-
-    // Format time as HH:MM:SS for time input with step="1"
-    const formatTime = (date) => {
-      const hours = String(date.getHours()).padStart(2, '0')
-      const minutes = String(date.getMinutes()).padStart(2, '0')
-      const seconds = String(date.getSeconds()).padStart(2, '0')
-      return `${hours}:${minutes}:${seconds}`
-    }
-
-    const dateStr = formatDate(started)
+    const dateStr = getDateStr(started)
     const startTimeStr = formatTime(started)
     const endTimeStr = formatTime(stopped)
 
@@ -191,7 +213,6 @@ watch(() => props.entry, (entry) => {
       is_billable: entry.is_billable
     }
 
-    // Store original values to compare later
     originalTimes.value = {
       date: dateStr,
       start_time: startTimeStr,
@@ -204,55 +225,5 @@ const close = () => {
   emit('close')
 }
 
-const save = async () => {
-  if (saving.value || !props.entry) return
-
-  try {
-    saving.value = true
-
-    // Check if times were changed by the user
-    const timesChanged =
-      form.value.date !== originalTimes.value.date ||
-      form.value.start_time !== originalTimes.value.start_time ||
-      form.value.end_time !== originalTimes.value.end_time
-
-    // Build the data object - only include times if they were changed
-    const data = {
-      project_id: form.value.project_id,
-      description: form.value.description || null,
-      is_billable: form.value.is_billable
-    }
-
-    // Only send time data if the user actually changed the times
-    // This preserves accumulated duration_minutes for entries with multiple sessions
-    if (timesChanged) {
-      const startDateTime = new Date(`${form.value.date}T${form.value.start_time}`)
-      const stopDateTime = new Date(`${form.value.date}T${form.value.end_time}`)
-
-      // Validate that stop time is after start time
-      if (stopDateTime <= startDateTime) {
-        alert('End time must be after start time.')
-        saving.value = false
-        return
-      }
-
-      data.started_at = startDateTime.toISOString()
-      data.stopped_at = stopDateTime.toISOString()
-    }
-
-    const response = await api.api(`/time-entries/${props.entry.id}`, {
-      method: 'PUT',
-      body: data
-    })
-
-    emit('save')
-    close()
-  } catch (error) {
-    console.error('Failed to update entry:', error)
-    console.error('Error data:', error.data)
-    alert('Failed to update time entry. Please try again.')
-  } finally {
-    saving.value = false
-  }
-}
+const save = () => saveForm(emit)
 </script>
