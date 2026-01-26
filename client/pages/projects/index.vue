@@ -197,10 +197,8 @@ definePageMeta({
 })
 
 const api = useApi()
-const projects = ref([])
+const { items: projects, loading, deletingId, fetch: fetchProjects, remove } = useResource('/projects')
 const clients = ref([])
-const loading = ref(true)
-const deletingId = ref(null)
 const showModal = ref(false)
 const editingProject = ref(null)
 const searchQuery = ref('')
@@ -269,17 +267,6 @@ const filteredProjects = computed(() => {
   return filtered.sort((a, b) => a.name.localeCompare(b.name))
 })
 
-const fetchProjects = async () => {
-  try {
-    loading.value = true
-    projects.value = await api.api('/projects')
-  } catch (error) {
-    console.error('Failed to fetch projects:', error)
-  } finally {
-    loading.value = false
-  }
-}
-
 const fetchClients = async () => {
   try {
     clients.value = await api.api('/clients')
@@ -310,23 +297,7 @@ const handleSave = () => {
 
 const deleteProject = async (id) => {
   const project = projects.value.find(p => p.id === id)
-
-  if (!confirm(`Are you sure you want to delete ${project?.name}?`)) {
-    return
-  }
-
-  try {
-    deletingId.value = id
-    await api.api(`/projects/${id}`, {
-      method: 'DELETE'
-    })
-    projects.value = projects.value.filter(p => p.id !== id)
-  } catch (error) {
-    console.error('Failed to delete project:', error)
-    alert('Failed to delete project. Please try again.')
-  } finally {
-    deletingId.value = null
-  }
+  await remove(id, project?.name)
 }
 
 onMounted(() => {

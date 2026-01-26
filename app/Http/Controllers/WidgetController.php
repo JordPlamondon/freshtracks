@@ -32,6 +32,13 @@ class WidgetController extends Controller
         return User::findOrFail($userId);
     }
 
+    protected function authorizeEntry(TimeEntry $timeEntry, User $user): void
+    {
+        if ($timeEntry->user_id !== $user->id) {
+            abort(403, 'Not authorized');
+        }
+    }
+
     public function activeTimer(Request $request)
     {
         $user = $this->getWidgetUser($request);
@@ -79,10 +86,7 @@ class WidgetController extends Controller
     public function restartTimer(Request $request, TimeEntry $timeEntry)
     {
         $user = $this->getWidgetUser($request);
-
-        if ($timeEntry->user_id !== $user->id) {
-            abort(403, 'Not authorized');
-        }
+        $this->authorizeEntry($timeEntry, $user);
 
         $activeEntry = $user->timeEntries()->whereNull('stopped_at')->first();
         if ($activeEntry && $activeEntry->id !== $timeEntry->id) {
@@ -120,10 +124,7 @@ class WidgetController extends Controller
     public function stopTimer(Request $request, TimeEntry $timeEntry)
     {
         $user = $this->getWidgetUser($request);
-
-        if ($timeEntry->user_id !== $user->id) {
-            abort(403, 'Not authorized');
-        }
+        $this->authorizeEntry($timeEntry, $user);
 
         try {
             $timeEntry = $this->timerService->stopTimer($timeEntry, $user);
@@ -136,10 +137,7 @@ class WidgetController extends Controller
     public function deleteEntry(Request $request, TimeEntry $timeEntry)
     {
         $user = $this->getWidgetUser($request);
-
-        if ($timeEntry->user_id !== $user->id) {
-            abort(403, 'Not authorized');
-        }
+        $this->authorizeEntry($timeEntry, $user);
 
         $entryId = $timeEntry->id;
         $timeEntry->delete();
@@ -152,10 +150,7 @@ class WidgetController extends Controller
     public function updateEntry(Request $request, TimeEntry $timeEntry)
     {
         $user = $this->getWidgetUser($request);
-
-        if ($timeEntry->user_id !== $user->id) {
-            abort(403, 'Not authorized');
-        }
+        $this->authorizeEntry($timeEntry, $user);
 
         $validated = $request->validate([
             'project_id' => 'required|exists:projects,id',

@@ -139,10 +139,7 @@ definePageMeta({
   middleware: 'auth'
 })
 
-const api = useApi()
-const clients = ref([])
-const loading = ref(true)
-const deletingId = ref(null)
+const { items: clients, loading, deletingId, fetch: fetchClients, remove } = useResource('/clients')
 const showModal = ref(false)
 const editingClient = ref(null)
 const searchQuery = ref('')
@@ -183,17 +180,6 @@ const filteredClients = computed(() => {
   return filtered.sort((a, b) => a.name.localeCompare(b.name))
 })
 
-const fetchClients = async () => {
-  try {
-    loading.value = true
-    clients.value = await api.api('/clients')
-  } catch (error) {
-    console.error('Failed to fetch clients:', error)
-  } finally {
-    loading.value = false
-  }
-}
-
 const openCreateModal = () => {
   editingClient.value = null
   showModal.value = true
@@ -217,28 +203,12 @@ const handleSave = () => {
 const deleteClient = async (id) => {
   const client = clients.value.find(c => c.id === id)
 
-  // Check if client has projects
-  if (client && client.projects && client.projects.length > 0) {
+  if (client?.projects?.length > 0) {
     alert(`Cannot delete ${client.name} because they have ${client.projects.length} project(s). Please delete or reassign the projects first.`)
     return
   }
 
-  if (!confirm(`Are you sure you want to delete ${client?.name}?`)) {
-    return
-  }
-
-  try {
-    deletingId.value = id
-    await api.api(`/clients/${id}`, {
-      method: 'DELETE'
-    })
-    clients.value = clients.value.filter(c => c.id !== id)
-  } catch (error) {
-    console.error('Failed to delete client:', error)
-    alert('Failed to delete client. Please try again.')
-  } finally {
-    deletingId.value = null
-  }
+  await remove(id, client?.name)
 }
 
 onMounted(() => {

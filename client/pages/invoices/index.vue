@@ -156,9 +156,7 @@ definePageMeta({
 })
 
 const api = useApi()
-const invoices = ref([])
-const loading = ref(true)
-const deletingId = ref(null)
+const { items: invoices, loading, deletingId, fetch: fetchInvoices, remove } = useResource('/invoices')
 const showGenerateModal = ref(false)
 const showViewModal = ref(false)
 const viewingInvoice = ref(null)
@@ -199,17 +197,6 @@ const filteredInvoices = computed(() => {
 
   return filtered.sort((a, b) => new Date(b.invoice_date) - new Date(a.invoice_date))
 })
-
-const fetchInvoices = async () => {
-  try {
-    loading.value = true
-    invoices.value = await api.api('/invoices')
-  } catch (error) {
-    console.error('Failed to fetch invoices:', error)
-  } finally {
-    loading.value = false
-  }
-}
 
 const viewInvoice = async (invoice) => {
   try {
@@ -253,23 +240,7 @@ const updateStatus = async (invoice) => {
 
 const deleteInvoice = async (id) => {
   const invoice = invoices.value.find(inv => inv.id === id)
-
-  if (!confirm(`Are you sure you want to delete invoice #${invoice?.invoice_number}?`)) {
-    return
-  }
-
-  try {
-    deletingId.value = id
-    await api.api(`/invoices/${id}`, {
-      method: 'DELETE'
-    })
-    invoices.value = invoices.value.filter(inv => inv.id !== id)
-  } catch (error) {
-    console.error('Failed to delete invoice:', error)
-    alert('Failed to delete invoice. Please try again.')
-  } finally {
-    deletingId.value = null
-  }
+  await remove(id, `invoice #${invoice?.invoice_number}`)
 }
 
 const openGenerateModal = () => {

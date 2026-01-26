@@ -39,25 +39,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::apiResource('invoices', App\Http\Controllers\InvoiceController::class);
     Route::post('/invoices/generate', [App\Http\Controllers\InvoiceController::class, 'generate']);
-    Route::get('/settings', function (Request $request) {
-        $user = $request->user();
-        $settings = $user->settings ?? [];
 
-        return response()->json($settings);
-    });
-
-    Route::put('/settings', function (Request $request) {
-        $user = $request->user();
-
-        $validated = $request->validate([
-            'show_live_revenue' => 'sometimes|boolean',
-        ]);
-
-        $currentSettings = $user->settings ?? [];
-        $newSettings = array_merge($currentSettings, $validated);
-
-        $user->update(['settings' => $newSettings]);
-
-        return response()->json($newSettings);
-    });
+    Route::get('/settings', [App\Http\Controllers\SettingsController::class, 'show']);
+    Route::put('/settings', [App\Http\Controllers\SettingsController::class, 'update']);
 });
